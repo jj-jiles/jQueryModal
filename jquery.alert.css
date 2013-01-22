@@ -1,0 +1,163 @@
+/* *******************************************************************************
+*
+* Alert Overlay Modal 
+*
+**** */
+/* *****
+* Primary Elements for displaying the alert modal
+* Some styles can be edited and are notated as such
+***** */
+#alert-message-dim {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 10000;
+  width: 0;
+  height: 0;
+  /* editable */
+  background: transparent;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#70000000,endColorstr=#70000000);
+  zoom: 1;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+#alert-message-overlay-wrapper .clear {
+  font-size: 0px!important;
+  height: 0px;
+}
+#alert-message-overlay-wrapper {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  padding: 12px;
+  overflow: hidden;
+  background: #575551;
+  border-radius: 12px;
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
+  /* editable */
+}
+#alert-message-content {
+  display: block;
+  vertical-align: top;
+  overflow: hidden;
+  height: auto;
+  width: auto;
+  min-width: 350px;
+  min-height: 100px;
+  background: #FAFAFA;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  /* editable */
+}
+/* *****
+* END ::: Primary Elements 
+***** */
+/* *****
+* Message Content Container
+***** */
+#alert-message-content header {
+  margin: 0 0 0 0;
+  padding: 18px 6px 18px 14px;
+  border-radius: 4px 4px 0 0;
+  -webkit-border-radius: 4px 4px 0 0;
+  -moz-border-radius: 4px 4px 0 0;
+  background: #f3f3f3;
+  /* Old browsers */
+
+  background: -moz-linear-gradient(top, #f3f3f3 0, #e3e3e3 100, #e3e3e3);
+  /* FF3.6+ */
+
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #f3f3f3), color-stop(100, #e3e3e3));
+  /* Chrome,Safari4+ */
+
+  background: -webkit-linear-gradient(top, #f3f3f3 0, #e3e3e3 100);
+  /* Chrome10+,Safari5.1+ */
+
+  background-image: -ms-linear-gradient(top, #f3f3f3 0, #e3e3e3 100);
+  /* IE10+ */
+
+  background: -o-linear-gradient(top, #f3f3f3 0, #e3e3e3 100);
+  /* Opera11.10+ */
+
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=#f3f3f3, endColorstr=#e3e3e3,GradientType=0 );
+  /* IE6-9 */
+
+  background: linear-gradient(top, #f3f3f3 0, #e3e3e3 100);
+  /* W3C */
+
+}
+#alert-message-content header h4 {
+  color: #222;
+  text-shadow: 1px 1px 1px #ffffff;
+  font-weight: normal;
+  font-weight: normal!important;
+}
+#alert-message-content p {
+  width: 100%;
+  padding-bottom: 8px;
+}
+#alert-message-content h6 {
+  padding: 4px 0 4px 0;
+}
+#alert-message-content p.buttons {
+  width: 105%;
+  margin: 12px 0 -12px -12px;
+  padding-right: 24px;
+  padding-bottom: 12px;
+}
+/* *****
+* END ::: Message Content Container
+***** */
+#alert-message-content {
+  min-width: 450px;
+}
+#alert-message-content label {
+  display: inline-block;
+  *display: inline;
+  *zoom: 1;
+  min-width: 75px;
+  text-align: right;
+  font-size: 12px;
+  padding: 6px 8px 0 0;
+}
+/* Container for displaying an error message or any other message */
+#alert-message {
+  display: none;
+  padding: 0;
+  margin: 0;
+}
+#alert-message section {
+  padding: 0 12px 0px 12px;
+  margin: 0;
+}
+#alert-message section p {
+  background: #ed7777;
+  color: #f3f3f3;
+  line-height: 140%;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  font-size: 1.4rem;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+#alert-message section p span {
+  display: block;
+  padding: 6px 0 6px 12px;
+  font-weight: normal;
+}
+#alert-message p.buttons {
+  width: 105%;
+  margin: 18px 0 0 0;
+  padding-right: 24px;
+  padding-bottom: 12px;
+}
+/* END ::: Alert Message */
