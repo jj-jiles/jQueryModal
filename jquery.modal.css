@@ -7,7 +7,7 @@
 * Primary Elements for displaying the alert modal
 * Some styles can be edited and are notated as such
 ***** */
-#alert-message-dim {
+#modal-message-dim {
   display: none;
   position: absolute;
   top: 0;
@@ -22,11 +22,11 @@
   zoom: 1;
   background-color: rgba(0, 0, 0, 0.7);
 }
-#alert-message-overlay-wrapper .clear {
+#modal-message-overlay-wrapper .clear {
   font-size: 0px!important;
   height: 0px;
 }
-#alert-message-overlay-wrapper {
+#modal-message-overlay-wrapper {
   position: absolute;
   left: 50%;
   margin: 0;
@@ -41,7 +41,7 @@
   -moz-box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
   /* editable */
 }
-#alert-message-content {
+#modal-message-content {
   display: block;
   vertical-align: top;
   overflow: hidden;
@@ -61,7 +61,7 @@
 /* *****
 * Message Content Container
 ***** */
-#alert-message-content header {
+#modal-message-content header {
   margin: 0 0 0 0;
   padding: 18px 6px 18px 14px;
   border-radius: 4px 4px 0 0;
@@ -92,20 +92,20 @@
   /* W3C */
 
 }
-#alert-message-content header h4 {
+#modal-message-content header h4 {
   color: #222;
   text-shadow: 1px 1px 1px #ffffff;
   font-weight: normal;
   font-weight: normal!important;
 }
-#alert-message-content p {
+#modal-message-content p {
   width: 100%;
   padding-bottom: 8px;
 }
-#alert-message-content h6 {
+#modal-message-content h6 {
   padding: 4px 0 4px 0;
 }
-#alert-message-content p.buttons {
+#modal-message-content p.buttons {
   width: 105%;
   margin: 12px 0 -12px -12px;
   padding-right: 24px;
@@ -114,10 +114,7 @@
 /* *****
 * END ::: Message Content Container
 ***** */
-#alert-message-content {
-  min-width: 450px;
-}
-#alert-message-content label {
+#modal-message-content label {
   display: inline-block;
   *display: inline;
   *zoom: 1;
@@ -127,16 +124,16 @@
   padding: 6px 8px 0 0;
 }
 /* Container for displaying an error message or any other message */
-#alert-message {
+#modal-message {
   display: none;
   padding: 0;
   margin: 0;
 }
-#alert-message section {
+#modal-message section {
   padding: 0 12px 0px 12px;
   margin: 0;
 }
-#alert-message section p {
+#modal-message section p {
   background: #ed7777;
   color: #f3f3f3;
   line-height: 140%;
@@ -149,14 +146,14 @@
   color: #FFFFFF;
   font-weight: bold;
 }
-#alert-message section p span {
+#modal-message section p span {
   display: block;
   padding: 6px 0 6px 12px;
   font-weight: normal;
 }
-#alert-message p.buttons {
+#modal-message p.buttons {
   width: 105%;
-  margin: 18px 0 0 0;
+  margin: 32px 0 -12px -12px;
   padding-right: 24px;
   padding-bottom: 12px;
 }

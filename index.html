@@ -1,0 +1,75 @@
+
+<!DOCTYPE HTML>
+<html>
+	<head>
+		
+		<title>Example of jQuery Modal</title> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;"/>
+		<link rel="stylesheet" type="text/css" href="normalize.css" />
+		<link rel="stylesheet" type="text/css" href="styles.css" />
+		<link rel="stylesheet" type="text/css" href="forms.css" />
+		<link rel="stylesheet" type="text/css" href="jquery.modal.css" />
+		
+	</head>
+	<body>
+		<header>
+			<h2>Example of jQuery Modal</h2>
+		</header>
+		<section id="wrapper">
+			<section id="container">
+				<p><a href="#" id="basic-modal">Basic Modal</a></p>
+				<p><a href="#" id="custom-buttons">Custom Buttons</a></p>
+				<p><a href="#" id="display-message-event">Handle events within the modal and display response messages</a></p>
+			</section>
+		</section>
+		<div id="loading-container-bottom"></div>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+		<script type="text/javascript" src="jquery.modal.js"></script>
+		<script type="text/javascript">
+		$(document).ready(function() {
+			$('#basic-modal').click(function(event) {
+				$.modal({
+					header : 'This is a modal',
+					message : '<p>This is the content</p>'
+				});
+				event.preventDefault();
+			});
+			$('#custom-buttons').click(function(event) {
+
+				var html = '<p>This is the content</p><p class="buttons"><input type="button" value="My Custom Button" onclick="$.modal(\'close\')" /></p>';
+
+				$.modal({
+					header : 'This is a modal',
+					message : html,
+					button : { display : false }
+				});
+
+				event.preventDefault();
+			});
+			$('#display-message-event').click(function(event) {
+
+				var html = '<p><label>Enter some text: </label><input type="text" name="some-text" id="some-text" value="" /></p>';
+				html += '<p class="buttons"><input type="button" id="try-submitting-text" value="Submit Text" /></p>';
+
+				$.modal({
+					header     : 'This is a modal with form validation',
+					message    : html,
+					button     : { display : false },
+					on_display : function() {
+						$('#try-submitting-text').bind('click', function() {
+							if ( $('#some-text').val() == '' ) {
+								$.modal('display_message', '<p>You forgot to enter the text</p>');
+							} else {
+								$.modal('close');
+							}
+						});
+					}
+				});
+				
+				event.preventDefault();
+
+			});
+		});
+		</script>
+	</body>
+</html>

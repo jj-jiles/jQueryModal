@@ -29,36 +29,36 @@
 *
 ********
 *
-*	Display Simple Alert Modal:
-*		$.alert("<header><h2>Alert Header</h2></header><p>Your Message</p>");
+*	Display Simple Modal:
+*		$.modal("<header><h2>Alert Header</h2></header><p>Your Message</p>");
 *
 *
 *******
 *
 *	Display Custom Alert Modal
-*		$.alert({
+*		$.modal({
 *			message : "<header><h2>Alert Header</h2></header><p>Your Message</p>", (should be formatted HTML, including the message header)
 *			buton  : {
 *				display : true|false,            [boolean|optional default=true]
 *				text    : "Ok",                  [string|optional default="Ok"]
 *			},
 *			is_modal   : true|false,             [boolean|optional default=false]
-*			callback   : { function() {...} },   [function|optional]               (callback when $.alert is fired, both on display and close)
-*			on_display : { function() { ... } }, [function|optional]               (callback fired on $.alert display)
-*			on_close   : { function() { ... } }, [function|optional]               (callback fired on $.alert close)
+*			callback   : { function() {...} },   [function|optional]               (callback when $.modal is fired, both on display and close)
+*			on_display : { function() { ... } }, [function|optional]               (callback fired on $.modal display)
+*			on_close   : { function() { ... } }, [function|optional]               (callback fired on $.modal close)
 *		});
 *
 *
 *******
 *
 *	Display Message within existing Modal (login screen error message would slide down login form and display a login error message)
-*		$.alert(
+*		$.modal(
 *			"display_message",
 *			"<p>You have entered an invalid user id or password</p>"
 *		);
 *
 *	Close Alert Modal
-*		$.alert('close');
+*		$.modal('close');
 *
 *
 *	
@@ -112,9 +112,9 @@
 			}
 		},
 		ids : {
-			dim          : 'alert-message-dim',
-			wrapper      : 'alert-message-overlay-wrapper',
-			content      : 'alert-message-content',
+			dim          : 'modal-message-dim',
+			wrapper      : 'modal-message-overlay-wrapper',
+			content      : 'modal-message-content',
 			close_button : 'close_alert'
 		}
 	};
@@ -134,7 +134,7 @@
 		init : function( objOptions ) {
 
 			// options passed is an object
-			// get the properties of the object for a custom $.alert modal
+			// get the properties of the object for a custom $.modal modal
 			if ( typeof(objOptions) == 'object' ) {
 				for ( var property in objOptions ) {
 					defaults[property] = objOptions[property];
@@ -142,7 +142,7 @@
 				options = defaults;
 
 			// options passed is a string
-			// we'll assume this is a basic $.alert modal
+			// we'll assume this is a basic $.modal modal
 			// and the options passed is the HTML content
 			} else {
 				defaults['message'] = objOptions;
@@ -190,7 +190,7 @@
 
 		/* ******
 		*
-		* Display the $.alert modal 
+		* Display the $.modal modal 
 		*
 		*/
 		display : function( objOptions ) {
@@ -208,12 +208,12 @@
 			$('#' + settings.ids.dim).remove();
 			$('body').prepend($this.html);
 
-			options.button.close = '<p class="align-right buttons"><input type="button" value="' + options.button.text + '" id="close_alert" class="' + settings.classes.buttons.cancel + '" onclick="$.alert(\'close\');" /></p>';
+			options.button.close = '<p class="align-right buttons"><input type="button" value="' + options.button.text + '" id="close_alert" class="' + settings.classes.buttons.cancel + '" onclick="$.modal(\'close\');" /></p>';
 			if ( options.button.display === false ) {
 				options.button.close = '';
 			}
 
-			$('#alert-message-content').html('');
+			$('#modal-message-content').html('');
 			$('#' + settings.ids.content).html( methods.create_header() + options.message + options.button.close );
 			
 			// Because the page height could be greater than the client height,
@@ -323,14 +323,14 @@
 						$(document).unbind('keyup');
 						$(document).bind('keyup',function(event) {
 							if(event.keyCode == 27){
-								$.alert('close');
+								$.modal('close');
 							}
 						});
 
 						$('#' + settings.ids.dim).click(function(event) {
 							_desired_id = $(this).attr('id');
 							if (event.target.id == _desired_id) {
-								$.alert('close');
+								$.modal('close');
 							}
 						});
 					}
@@ -356,7 +356,7 @@
 
 		/* ******
 		*
-		* Sets focus on the first input/select element in the $.alert modal 
+		* Sets focus on the first input/select element in the $.modal modal 
 		*
 		*/
 		focus_first : function() {
@@ -390,7 +390,7 @@
 
 		/* ******
 		* 
-		* Closes the $.alert modal 
+		* Closes the $.modal modal 
 		*
 		*/
 		close : function() {
@@ -437,8 +437,8 @@
 
 		/* ******
 		*
-		* Displays a message in the existing $.alert modal
-		* This will slide down the current $.alert modal content
+		* Displays a message in the existing $.modal modal
+		* This will slide down the current $.modal modal content
 		* and display the custom message.
 		*
 		* Used for things such as login error messages, form validation errors, etc.
@@ -452,14 +452,14 @@
 
 			methods.init(objOptions);
 
-			var modal_form    = $('#alert-message-content');
+			var modal_form    = $('#modal-message-content');
 			var form_elements = modal_form.find('#form-elements');
 			var form_buttons  = modal_form.find('.buttons');
-			var alert_message = modal_form.find('#alert-message');
+			var alert_message = modal_form.find('#modal-message');
 			
 			if ( alert_message.length <= 0 ) {
-				modal_form.find('header').after('<div id="alert-message"></div>');
-				var alert_message = modal_form.find('#alert-message');
+				modal_form.find('header').after('<div id="modal-message"></div>');
+				var alert_message = modal_form.find('#modal-message');
 			}
 
 
@@ -477,7 +477,7 @@
 			if ( typeof options.button.text != 'undefined' ) {
 				buttonText = options.button.text;
 			}
-			options.button.close = '<p class="buttons"><input type="button" value="' + buttonText + '" name="close-alert-message" id="close-alert-message" class="ui-button normal" /></p>';
+			options.button.close = '<p class="buttons"><input type="button" value="' + buttonText + '" name="close-modal-message" id="close-modal-message" class="ui-button normal" /></p>';
 
 
 			if ( options.button.display === false ) {
@@ -493,14 +493,14 @@
 
 				methods.bind_return_key();
 
-				var close_message = alert_message.find('#close-alert-message');
+				var close_message = alert_message.find('#close-modal-message');
 				close_message.focus();
 
 				form_elements.css({ 'display' : 'none' });
 				form_buttons.css({ 'display' : 'none' });
 
 				if ( typeof options.button.callback == 'function' ) {
-					alert_message.find('#close-alert-message').unbind('click').bind('click', function() {
+					alert_message.find('#close-modal-message').unbind('click').bind('click', function() {
 						options.button.callback();
 					});
 
@@ -511,7 +511,7 @@
 						alert_message.slideUp('fast', function() {
 							alert_message.html('');
 							methods.bind_return_key(true);
-							form_elements.focus_first();
+							methods.focus_first();
 						});
 					});
 				}
@@ -539,9 +539,9 @@
 		bind_return_key : function(bind) {
 
 			bind = typeof(bind)!='undefined' ? bind : false;
-			var modal_form    = $('#alert-message-content');
+			var modal_form    = $('#modal-message-content');
 			var form_buttons  = modal_form.find('.buttons');
-			var alert_message = modal_form.find('#alert-message');
+			var alert_message = modal_form.find('#modal-message');
 
 			$(document).unbind('keyup');
 			
@@ -591,7 +591,7 @@
 
 
 
-	$.alert = function( method ) {
+	$.modal = function( method ) {
 
 		// Method calling logic
 		if ( methods[method] ) {
