@@ -29,7 +29,7 @@
 *
 ********
 *
-*	Display Simple Modal:
+*	Display Simple Alert Modal:
 *		$.modal("<header><h2>Alert Header</h2></header><p>Your Message</p>");
 *
 *
@@ -63,6 +63,13 @@
 *
 *	
 ***** */
+
+/* ******
+*
+* Removes the filter attribute from a given DOM object.
+* Filters remove font antialiasing in IE
+*
+****** */
 (function($) {
      $.fn.removeFilter = function() {
         if ($.browser.msie) {
@@ -71,8 +78,14 @@
          }
      }
 })(jQuery);
- 
- 
+
+
+
+/* ******
+*
+* animates the Opacity of an object and automatically calls removeFilter()
+*
+****** */
 (function($){  
      $.fn.fadeToggle = function(options) {
           options  = typeof(options) != 'undefined'?options:'';
@@ -92,62 +105,106 @@
           );
      }
 })(jQuery);
+
+
+/* ******
+*
+* $.modal() begin
+*
+****** */
 (function( $ ) {
 	
-	var $this = $(this);
-
-	/* ******
-	*
-	* Set the basic defaults 
-	*
-	* Feel free to edit these classes/ids.
-	* Make sure you update the CSS file to reflect the changes
-	*
-	* ****** */
-	var settings = {
-		classes : {
-			buttons : {
-				cancel : 'ui-button cancel',
-				normal : 'ui-button normal'
+	var $this = $(this),
+		ui = {},
+		dimensions = {
+			_window : { height  : { full : 0, half : 0 }, yOffset : 0 },
+			page    : { yOffset : 0, height  : { full : 0, half : 0 } },
+			dim     : { height : 0, padding: 0 },
+			buttons : { height : 0 },
+			content : {
+				height  : { full: 0 , half  : 0 },
+				width   : { full: 0 , half  : 0 },
+				margin  : { top : 0 , bottom: 0 },
+				padding : function() {
+					padding = ui.wrapper.css('padding-top')
+					(padding===null || padding.length === 0) ? 0 : parseInt(padding);
+					return padding;
+				}
 			}
 		},
-		ids : {
-			dim          : 'modal-message-dim',
-			wrapper      : 'modal-message-overlay-wrapper',
-			content      : 'modal-message-content',
-			close_button : 'close_alert'
-		}
-	};
-	/* ******
-	* END: basic defaults */
+		settings = {
+			classes : {
+				buttons : {
+					cancel : 'ui-button cancel',
+					normal : 'ui-button normal'
+				},
+				type : 'notice'
+			},
+			ids : {
+				dim          : 'modal-message-dim',
+				wrapper      : 'modal-message-overlay-wrapper',
+				content      : 'modal-message-content',
+				close_button : 'close_alert'
+			},
+			alertCloseTimeout : ''
+		},
+		default_options  = { header : '', message : '', type : 'notice'  };
 
-	var options  = { header : '', message : '' };
-	var defaults = { text : '', type : 'error', html : '', focus_first : true, has_button : true, is_modal : false, callback : null, on_display : null, on_close : null, button : { display : true, text : 'Ok', close : '' } };
-	
 	var methods = {
+
+		defaults : { 
+			text        : '',
+			header      : '',
+			message     : '',
+			type        : 'notice',
+			html        : '',
+			focus_first : true,
+			has_button  : true,
+			is_modal    : false,
+			callback    : null,
+			on_display  : null,
+			on_close    : null,
+			url         : undefined,
+			button      : { display : true, text : 'Ok', close : '' },
+			ContentHTML : '<div id="' + settings.ids.dim + '"><ul class="bokeh"><li></li><li></li><li></li><li></li></ul>'
+							+ '<div id="' + settings.ids.wrapper + '">'
+							+ '<div id="' + settings.ids.content + '">'
+							+ '    <header><h4>%%_HEADER_%%</h4></header>'
+							+ '    <section id="modal-message"></section>'
+							+ '    <section class="modal-form">%%_CONTENT_HTML_%%</section>'
+							+ '</div>'
+							+ '</div>'
+							+ '</div>',
+			MessageHTML : '<section><p>%%_MESSAGE_HTML_%%</p></section>',
+			ButtonsHTML : '<p class="buttons">'
+							+ '<input type="button" value="%%_CLOSE_BUTTON_TEXT_%%" id="CloseModal" />'
+							+ '</p>',
+			bokeh : '<ul class="bokeh"><li></li><li></li><li></li><li></li></ul>'
+		},
 
 		/* ******
 		*
 		* Loop through the options passed 
 		*
 		*/
-		init : function( objOptions ) {
+		init : function(objOptions) {
+			options  = default_options;
+			defaults = this.defaults;
 
-			// options passed is an object
-			// get the properties of the object for a custom $.modal modal
 			if ( typeof(objOptions) == 'object' ) {
 				for ( var property in objOptions ) {
 					defaults[property] = objOptions[property];
 				}
-				options = defaults;
-
-			// options passed is a string
-			// we'll assume this is a basic $.modal modal
-			// and the options passed is the HTML content
-			} else {
-				defaults['message'] = objOptions;
-				options = defaults;
 			}
+			
+			defaults.hasCallback = false;
+			if ( typeof defaults.callback == 'function' ) {
+				defaults.hasCallback = true;
+			}
+			options = defaults;
+
+			return options;
+
 		},
 		/*
 		*
@@ -158,14 +215,72 @@
 
 
 
+		setUIElements : function() {
+			ui.dim     = $('#' + settings.ids.dim);
+			ui.wrapper = $('#' + settings.ids.wrapper);
+			ui.content = $('#' + settings.ids.content);
+			ui.header  = ui.content.find('header> h4');
+			ui.form    = ui.content.find('.modal-form');
+			ui.buttons = ui.content.find('.buttons');
+			ui.message = ui.content.find('#modal-message');
+			ui.bokeh   = ui.dim.find('.bokeh').eq(0);
+			ui.closeP = $('#modal-message-close-p');
+			return ui;
+		},
+
+
+
+
+
+		setDimensions : function(type) {
+
+			switch(type) {
+				case "window" :
+					dimensions._window.height.full = parseInt($(window).height());
+					dimensions._window.height.half = Math.ceil(dimensions._window.height.full/2);
+					dimensions._window.yOffset     = window.pageYOffset;
+					break;
+
+				case "page" :
+					dimensions.page.height  = parseInt($('html').outerHeight());
+					break;
+
+				case "dim" :
+					dimensions.dim.height  = dimensions.page.height+dimensions._window.yOffset;
+					break;
+
+				case "content" :
+					dimensions.content.padding = ui.wrapper.css('padding-top');
+					dimensions.content.padding = (dimensions.content.padding===null || dimensions.content.padding.length === 0) ? 0 : parseInt(dimensions.content.padding);
+
+					dimensions.content.height.full = parseInt( ui.content.outerHeight() ) + dimensions.content.padding;
+					dimensions.content.height.half = Math.ceil( (dimensions.content.height.full/2)+dimensions.content.padding );
+
+					dimensions.content.width.full  = ui.content.outerWidth();
+					dimensions.content.width.half  = Math.ceil( dimensions.content.width.full/2 );
+					break;
+
+				case "buttons" :
+					dimensions.buttons.height = parseInt(ui.buttons.outerHeight());
+					break;
+			}
+			
+			return dimensions;
+
+		},
+
+
+
+
 		/* ******
 		*
 		* Get the basic HTML of the alert modal
 		*
 		*/
 		get_html : function () {
-			$this.html = '<div id="' + settings.ids.dim + '"><div id="' + settings.ids.wrapper + '"><div id="' + settings.ids.content + '"></div></div></div>';
-			return $this.html;
+			options = methods.init(methods.defaults);
+			html = options.ContentHTML;
+			return html;
 		},
 		/*
 		*
@@ -194,59 +309,67 @@
 		*
 		*/
 		display : function( objOptions ) {
+			var self = this;
+
+			var options = defaults;
+
+			options = methods.init(objOptions);
+
+			if ( typeof window['ModalCloseTimeout'] !== 'undefined' ) {
+				window.clearTimeout(window['ModalCloseTimeout']);
+			}
 
 			if ( typeof(objOptions.button) == 'undefined' ) {
 				options.button = { display : true, text : 'Ok' };
 			}
 
-			methods.init(objOptions);
-			
-			$this.html    = methods.get_html();
-			$this.content = $('#' + settings.ids.content);
+			options.button.close = options.ButtonsHTML.replace(/%%_CLOSE_BUTTON_TEXT_%%/, options.button.text).replace(/%%_CANCEL_BUTTON_CLASS_%%/, settings.classes.buttons.cancel);
 
-			$('#' + settings.ids.dim).html('');
-			$('#' + settings.ids.dim).remove();
-			$('body').prepend($this.html);
-
-			options.button.close = '<p class="align-right buttons"><input type="button" value="' + options.button.text + '" id="close_alert" class="' + settings.classes.buttons.cancel + '" onclick="$.modal(\'close\');" /></p>';
 			if ( options.button.display === false ) {
 				options.button.close = '';
 			}
 
+			//
+			// Clear existing HTML and remove child elements
+			$('#' + settings.ids.dim).html('');
+			$('#' + settings.ids.dim).remove();
 			$('#modal-message-content').html('');
-			$('#' + settings.ids.content).html( methods.create_header() + options.message + options.button.close );
+
+			//
+			// Set the HTML for the modal and append it to the body
+			// If there's options.url passed, use the options.message property
+			if ( typeof options.url === 'undefined' ) {
+				$this.html = options.ContentHTML.replace(/%%_HEADER_%%/, options.header).replace(/%%_CONTENT_HTML_%%/, options.message + options.button.close);
+			} else {
+				$this.html = options.ContentHTML.replace(/%%_HEADER_%%/, options.header).replace(/%%_CONTENT_HTML_%%/, '');
+			}
+
+			$('body').prepend($this.html);
+
+			ui = methods.setUIElements();
+
+			ui.content.addClass(options.type);
+
+			ui.content.find('input[type=button][value="Ok"]').addClass('ui-button solid normal');
+			ui.content.find('input[type=button][value="Cancel"]').addClass('ui-button solid cancel');
 			
 			// Because the page height could be greater than the client height,
 			// we want to disable scrolling of the client and set the modal
 			// directly in the middle on the viewable area
-			window.setTimeout(function() {
+			window.setTimeout(function(event) {
 
-				var _window = { height  : { full : 0, half : 0 }, yOffset : 0 }
-				var page    = { yOffset : 0, height  : { full : 0, half : 0 } }
-				var dim     = { height : 0, padding: 0 }
+				// set dimensions for dimensions._window
+				methods.setDimensions("window");
 
-				_window.height.full = parseInt($(window).height());
-				_window.height.half = Math.ceil(_window.height.full/2);
-				_window.yOffset     = window.pageYOffset;
-
-				$this.window_yoffset = _window.yOffset;
+				$this.window_yoffset = dimensions._window.yOffset;
 
 				// get the body's original margin so we can reset accordingly
 				if ( typeof $this.body_margin == 'undefined' ) {
 					$this.body_margin  = $('body').css('margin');
 				}
 
-				// create some reusable DOM objects
-				var $body     = $('body');
-				var $dim      = $('#' + settings.ids.dim);
-				var $wrapper  = $('#' + settings.ids.wrapper);
-				var $content  = $('#' + settings.ids.content);
-
-				var ui = {
-					dim : $dim,
-					wrapper : $wrapper,
-					content : $content
-				};
+				// get the body DOM element
+				var $body = $('body');
 
 
 				// to account for the scroll bar disappearing after the we remove it,
@@ -258,86 +381,107 @@
 					$body.css({ 'overflow' : 'hidden' });
 				}
 
-				page.height  = parseInt($('html').outerHeight());
+				// set dimensions for dimensions.page
+				methods.setDimensions("page");
 
-				dim.height  = page.height+_window.yOffset;
-
-				$dim.css({
+				ui.dim.css({
 					'position'   : 'absolute',
-					'height'     : '100%',
+					'height'     : $(document).height() + 'px',
 					'width'      : '100%',
-					'top'        : $this.window_yoffset + 'px',
+					'top'        : 0,
 					'bottom'     : '0'
 				});
+
+				ui.bokeh.css({
+					'top' : Math.floor($(window).height()/2)+parseInt($(window).scrollTop()) + 'px'
+				});
 				
-				$wrapper.css('visibility','hidden');
+				ui.wrapper.css('visibility','hidden');
 				
 				//
 				//
 				// after a half second delay (to give things time to draw),
 				// add the event listeners to the reg/login content elements
-				$dim.fadeIn('fast', function() {
+				ui.dim.fadeIn(100, function() {
 
-					
-					var content = {
-						height  : { full: 0 , half  : 0 },
-						width   : { full: 0 , half  : 0 },
-						margin  : { top : 0 , bottom: 0 },
-						padding : function() {
-							padding = $wrapper.css('padding-top')
-							(padding===null || padding.length === 0) ? 0 : parseInt(padding);
-							return padding;
-						}
-					};
+					if ( typeof options.url !== 'undefined' ) {
+						data = $.ajax({
+							type  : "GET",
+							url   : options.url,
+							async : false
 
-					content.padding     = $wrapper.css('padding-top');
-					content.padding     = (content.padding===null || content.padding.length === 0) ? 0 : parseInt(content.padding);
+						});
+						options.message = data.responseText;
+						$('#modal-message-content> .modal-form').html(options.message + options.button.close);						
+						// ui.content = $('#' + settings.ids.content);
+						ui.buttons = ui.content.find('.buttons');
+						delete(options.url);
+					}
 
-					content.height.full = parseInt( $content.outerHeight() ) + content.padding;
-					content.height.half = Math.ceil( (content.height.full/2)+content.padding );
+					methods.setDimensions("content");
+					methods.setDimensions("buttons");
 
-					content.width.full  = $('#' + settings.ids.content).outerWidth();
-					content.width.half  = Math.ceil( content.width.full/2 );
+					ui.content.css({'height' : dimensions.content.height.full+dimensions.buttons.height + 'px' });
 
-					$content.css({'height' : content.height.full + 'px' });
+					wrapper_height = parseInt( ui.content.outerHeight() );
 
-					wrapper_height = parseInt( $content.outerHeight() );
-
-					$wrapper.css({
-						'top'         : '50%',
-						'height'      : wrapper_height + 'px!important',
-						'margin-left' : '-' + content.width.half + 'px',
-						'margin-top'  : '-' + content.height.half + 'px',
+					ui.wrapper.css({
+						'position'    : 'absolute',
+						'top'         : Math.floor($(window).height()/2)+parseInt($(window).scrollTop()) + 'px',
+						'height'      : wrapper_height+dimensions.buttons.height + 'px!important',
+						'margin-left' : '-' + dimensions.content.width.half + 'px',
+						'margin-top'  : '-' + dimensions.content.height.half + 'px',
 						'display'     : 'none',
-						'visibility'  : 'visible'
+						'visibility'  : 'visible',
+						'width'       : dimensions.content.width.full+24 + 'px'
 					});
+
+					ui.bokeh.fadeOut(200, function(event) {
 					
-					$wrapper.fadeIn('fast', function() {
-						if ( options.focus_first ) {
-							methods.focus_first();
-						}
-					});
-			
-					if ( !options.is_modal ) {
-						// Set bind to Esc key for closing the alert
-						$(document).unbind('keyup');
-						$(document).bind('keyup',function(event) {
-							if(event.keyCode == 27){
-								$.modal('close');
+						ui.wrapper.fadeIn(300, function(event) {
+							if ( options.focus_first ) {
+								methods.focus_first();
+								methods.bind_return_key(true);
 							}
+
+							ui.content.find('#CloseModal').unbind('click').bind('click', function() {
+								window.clearTimeout(window['ModalCloseTimeout']);
+								$.modal('close');
+							});
+
+							if ( typeof options.after_display == 'function' ) {
+								options.after_display(event, ui);
+							}
+
+							if ( typeof options.timeout !== 'undefined' ) {
+								window['ModalCloseTimeout'] = window.setTimeout(function() { $.modal('close'); }, options.timeout);
+							}
+
 						});
 
-						$('#' + settings.ids.dim).click(function(event) {
-							_desired_id = $(this).attr('id');
-							if (event.target.id == _desired_id) {
-								$.modal('close');
-							}
-						});
-					}
-					
-					if ( typeof(options.on_display) == 'function' ) {
-						options.on_display(ui);
-					}
+						if ( !options.is_modal ) {
+							// Set bind to Esc key for closing the alert
+							$(document)
+								.unbind('keypress')
+								.bind('keypress', function(event) {
+									if(event.keyCode == 27){
+										$.modal('close');
+									}
+								});
+
+							$('#' + settings.ids.dim).click(function(event) {
+								_desired_id = $(this).attr('id');
+								if (event.target.id == _desired_id) {
+									$.modal('close');
+								}
+							});
+						}
+						
+						if ( typeof(options.on_display) == 'function' ) {
+							options.on_display(event, ui);
+						}
+
+					});
 					
 				});
 			},300);
@@ -360,14 +504,17 @@
 		*
 		*/
 		focus_first : function() {
-			var elem = $('#' + settings.ids.content).find('input:visible', this).get(0);
-			var select = $('#' + settings.ids.content).find('select:visible', this).get(0);
+			var self   = this,
+				ui     = methods.setUIElements(),
+				elem   = ui.content.find('input:visible', this).get(0),
+				select = ui.content.find('select:visible', this).get(0);
+
 			if (select && elem) {
 				if (select.offsetTop < elem.offsetTop) {
 					elem = select;
 				}
 			}
-			var textarea = $('#' + settings.ids.content).find('textarea:visible', this).get(0);
+			var textarea = ui.content.find('textarea:visible', this).get(0);
 			if (textarea && elem) {
 				if (textarea.offsetTop < elem.offsetTop) {
 					elem = textarea;
@@ -393,9 +540,21 @@
 		* Closes the $.modal modal 
 		*
 		*/
-		close : function() {
-			var $dim = $('#' + settings.ids.dim);
-			$dim.fadeOut('fast',function() {
+		close : function(objOptions) {
+			var self = this,
+				options = methods.init(objOptions, {
+					callback : undefined
+				}),
+				ui = methods.setUIElements();
+
+			window.clearTimeout(window['ModalCloseTimeout']);
+			
+			if ( typeof window['ModalCloseTimeout'] !== 'undefined' ) {
+				window.clearTimeout(window['ModalCloseTimeout']);
+			}
+			
+
+			ui.dim.fadeOut(100,function() {
 				scroll_to = $('body').css('margin-top');
 				scroll_to = Math.abs(parseInt(scroll_to));
 
@@ -414,23 +573,70 @@
 
 				$('#' + settings.ids.content).html('').remove();
 				$('#' + settings.ids.wrapper).html('').remove();
-				$dim.html('').remove();
+				ui.dim.html('').remove();
 				if ( typeof (options.callback) == 'function' ) {
 					options.callback.call();
 				} else if ( typeof ( options.on_close) == 'function' ) {
 					options.on_close.call();
 				}
-
-				for (var prop in options ) {
-					options[prop] = null;
+					
+				if ( typeof(options.on_close) == 'function' ) {
+					options.on_close();
 				}
+
+				// for (var prop in options ) {
+				// 	options[prop] = null;
+				// }
 			});
+
 		},
 		/* 
 		*
 		* END: Close
 		*
 		****** */
+
+
+
+
+		redraw : function(options) {
+			var self = methods,
+				options = self.init(options),
+				ui = self.setUIElements(),
+				ExistingHeight,
+				NewHeight;
+
+			// DOM
+			// ModalWrapper = $('#modal-message-overlay-wrapper');
+			// ModalContent = $('#modal-message-content');
+			// Buttons      = ui.content.find('.buttons');
+
+			// get existing height of modal
+			ExistingHeight = ui.content[0].scrollHeight;
+
+			// set buttons position to relative and remove bottom position
+			ui.buttons.css({
+				'position' : 'relative',
+				'bottom'   : ''
+			});
+
+			// remove content style attribute so height is elastic
+			ui.content.removeAttr('style');
+
+			// get new height after it adjusts
+			NewHeight = ui.content[0].scrollHeight;
+			ButtonHeight = (ui.closeP.length > 0) ? ui.closeP[0].scrollHeight : 0;
+
+			// set the height of content so it stays
+			ui.content.css({ 'height' : (NewHeight+ButtonHeight) + 'px' });
+
+			// set button position to absolute and position at bottom
+			ui.buttons.css({
+				'position' : 'absolute',
+				'bottom'   : '0'
+			});
+
+		},
 
 
 
@@ -445,85 +651,171 @@
 		*
 		*/
 		display_message : function( objOptions ) {
+			var ui = methods.setUIElements();
 
-			if ( typeof(objOptions.button) == 'undefined' ) {
-				options.button = { display : true };
+			window.clearTimeout(window['ModalCloseTimeout']);
+
+			var defaults = methods.defaults;
+			DMoptions = default_options;
+
+			if ( objOptions instanceof Object && !objOptions.hasOwnProperty('button') ) {
+				DMoptions.button = { display : true };
 			}
 
-			methods.init(objOptions);
-
-			var modal_form    = $('#modal-message-content');
-			var form_elements = modal_form.find('#form-elements');
-			var form_buttons  = modal_form.find('.buttons');
-			var alert_message = modal_form.find('#modal-message');
+			if ( typeof(objOptions) == 'object' ) {
+				for ( var property in objOptions ) {
+					DMoptions[property] = objOptions[property];
+				}
+			}
 			
-			if ( alert_message.length <= 0 ) {
-				modal_form.find('header').after('<div id="modal-message"></div>');
-				var alert_message = modal_form.find('#modal-message');
+			DMoptions.hasCallback = false;
+			if ( typeof DMoptions.callback == 'function' ) {
+				DMoptions.hasCallback = true;
+			}
+			
+			// var ui.content     = $('#modal-message-content');
+			var Header        = ui.content.find('header> h4');
+			// var ui.form  = ui.content.find('.modal-form');
+			var FormButtons   = ui.content.find('.buttons');
+			// var ui.message  = ui.content.find('#modal-message');
+
+			//
+			// Add an empty alert message element
+			ui.message.html(DMoptions.message);
+
+			if ( DMoptions.hasOwnProperty('type') ) {
+				ui.message.addClass(DMoptions.type);
 			}
 
+			// var ui.message   = ui.content.find('#modal-message');
 
-			var form_height = parseInt(form_elements.outerHeight());
+			if ( DMoptions.hasOwnProperty('header') && DMoptions.header != '' ) {
+				var OldHeaderText = ui.header.text();
+				this.OldHeaderText = OldHeaderText;
+				ui.header.text(DMoptions.header);
+			}
 
-			alert_message.html(options.message);
+			buttonText = 'Try Again';
+			if ( typeof DMoptions.button.text != 'undefined' ) {
+				buttonText = DMoptions.button.text;
+			}
+			DMoptions.button.close = '<p id="modal-message-close-p" class="buttons"><input type="button" value="' + buttonText + '" name="CloseModalMessage" id="CloseModalMessage" class="ui-button normal" /></p>';
+
+
+			if ( typeof DMoptions.button.html != 'undefined' ) {
+				DMoptions.button.close = '<p id="modal-message-close-p" class="buttons">' + DMoptions.button.html + '</p>';
+			}
+
+			if ( DMoptions.button.display === false ) {
+				DMoptions.button.close = '';
+			}
+
+			ui.content.append(DMoptions.button.close);
+
+			var FormHeight     = parseInt(ui.form.outerHeight());
+			var HeaderHeight   = parseInt(ui.header.outerHeight());
+			var ButtonsHeight  = ( DMoptions.button.display === false ) ? ui.buttons.outerHeight() : parseInt($('#modal-message-close-p').outerHeight());
+
+			FormHeight = FormHeight+ButtonsHeight;
+
+			//ui.message.html(DMoptions.message);
 			
-			var modal_width = modal_form.width();
+			var modal_width = ui.content.width();
 
-			alert_message.css({
-				'width'     : modal_width + 'px'
+			ui.message.css({
+				'width' : modal_width + 'px'
 			});
 
-			buttonText = 'try again';
-			if ( typeof options.button.text != 'undefined' ) {
-				buttonText = options.button.text;
-			}
-			options.button.close = '<p class="buttons"><input type="button" value="' + buttonText + '" name="close-modal-message" id="close-modal-message" class="ui-button normal" /></p>';
 
-
-			if ( options.button.display === false ) {
-				options.button.close = '';
-			}
-
-			alert_message.append(options.button.close);
-
-
-			alert_message.find('section').css({ 'height' : form_height + 'px', 'width' : modal_width + 'px' });
+			ui.message.find('section').eq(0).css({ 'height' : FormHeight + 'px', 'width' : modal_width + 'px' });
 			
-			alert_message.slideDown('fast',function() {
+			ui.form.fadeOut(150, function() {
 
-				methods.bind_return_key();
+				ui.message.fadeIn(150,function() {
 
-				var close_message = alert_message.find('#close-modal-message');
-				close_message.focus();
+					methods.bind_return_key();
 
-				form_elements.css({ 'display' : 'none' });
-				form_buttons.css({ 'display' : 'none' });
+					methods.redraw();
 
-				if ( typeof options.button.callback == 'function' ) {
-					alert_message.find('#close-modal-message').unbind('click').bind('click', function() {
-						options.button.callback();
-					});
+					var CloseMessage = ui.content.find('#CloseModalMessage');
+					CloseMessage.focus();
 
-				} else {
-					close_message.click(function() {
-						form_elements.css({ 'display' : 'block' });
-						form_buttons.css({ 'display' : 'block' });
-						alert_message.slideUp('fast', function() {
-							alert_message.html('');
-							methods.bind_return_key(true);
-							methods.focus_first();
+					if ( typeof DMoptions.button.callback == 'function' ) {
+						CloseMessage.unbind('click').bind('click', function() {
+							DMoptions.button.callback(event, ui);
 						});
-					});
-				}
-					
-				if ( typeof(options.callback) == 'function' ) {
-					options.callback.call();
-				}
-			});
+
+					} else {
+						CloseMessage.unbind('click').on('click', function() {
+							methods.close_message(objOptions);
+
+						});
+						// CloseMessage.click(function() {
+						// 	$('#modal-message-close-p').fadeOut(150);
+						// 	Header.html(OldHeaderText);
+						// 	ui.message.fadeOut(150, function() {
+						// 		FormElements.fadeIn(150, function() {
+						// 			ui.message.html('');
+						// 			FormElements.focus_first();
+						// 			$('#modal-message-close-p').remove();
+						// 			methods.bind_return_key(true);
+						// 		});
+						// 	}).attr('class', '');
+						// });
+					}
+						
+					if ( typeof(DMoptions.callback) == 'function' ) {
+						DMoptions.callback(event, ui);
+					}
+
+					if ( DMoptions.hasOwnProperty('timeout') ) {
+						window['ModalCloseTimeout'] = window.setTimeout(function() { $.modal('close') }, DMoptions.timeout);
+					}
+
+				});// End: ui.message Fade In
+
+			}); // End: FormElements Fade Out
 		},
 		/*
 		*
-		* END: display_message
+		* END: display_message 
+		*
+		****** */
+
+
+
+
+		/* ******
+		* 
+		* Closes the display_message form 
+		*
+		*/
+		close_message : function(objOptions) {
+			options = methods.init(objOptions);
+
+			var ui = methods.setUIElements();
+			
+			// var ModalForm     = $('#modal-message-content');
+			// var Header        = ModalForm.find('header> h4');
+			// var FormElements  = ModalForm.find('.modal-form');
+			// var FormButtons   = ModalForm.find('.buttons');
+			// var AlertMessage  = ModalForm.find('#modal-message');
+
+			ui.closeP.fadeOut(150);
+			ui.header.html(this.OldHeaderText);
+			ui.message.fadeOut(150, function() {
+				ui.form.fadeIn(150, function() {
+					ui.message.html('');
+					ui.form.focus_first();
+					ui.closeP.remove();
+					methods.bind_return_key(true);
+					methods.redraw();
+				});
+			}).attr('class', '');
+		},
+		/*
+		*
+		* END: close_message
 		*
 		****** */
 
@@ -554,9 +846,9 @@
 						var input_button = form_buttons.find('input[type="button"]').get(0);
 						var button       = form_buttons.find('button').get(0);
 
-						has_input_submit = (typeof(input_submit)=='undefined') ? false : true;
-						has_input_button = (typeof(input_button)=='undefined') ? false : true;
-						has_button       = (typeof(button)      =='undefined') ? false : true;
+						has_input_submit = (typeof(input_submit)==='undefined') ? false : true;
+						has_input_button = (typeof(input_button)==='undefined') ? false : true;
+						has_button       = (typeof(button)      ==='undefined') ? false : true;
 						
 						elem = input_submit;
 
@@ -572,12 +864,22 @@
 					}
 				});
 			}
-		}
+		},
 		/*
 		*
 		* END: bind_return_key
 		*
 		****** */
+
+
+
+		is_visible : function( objOptions ) {
+
+			options = methods.init(objOptions);
+
+			return ( $('#modal-message-content').length > 0 );
+
+		}
 
 
 	};
